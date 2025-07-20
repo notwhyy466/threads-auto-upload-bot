@@ -1,18 +1,18 @@
 {
   "name": "threads-auto-upload-bot",
   "version": "1.0.0",
-  "description": "Automated Threads (Meta) posting bot with Google Sheets integration and scheduling",
+  "description": "🧵 Automated Threads (Meta) posting bot with smart scheduling, CSV integration, and session management",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
-    "cleanup": "powershell -ExecutionPolicy Bypass -File cleanup.ps1",
-    "test": "node -e \"const SheetsClient = require('./src/sheets-client'); const client = new SheetsClient(); client.testConnection().then(() => process.exit(0)).catch(() => process.exit(1))\"",
-    "test-sheets": "node -e \"const SheetsClient = require('./src/sheets-client'); const client = new SheetsClient(); client.testConnection().then(() => process.exit(0)).catch(() => process.exit(1))\"",
-    "test-threads": "node -e \"const ThreadsBot = require('./src/threads-bot'); const bot = new ThreadsBot(); bot.test().then(() => bot.close()).then(() => process.exit(0)).catch(() => process.exit(1))\"",
-    "view-threads": "node -e \"const SheetsClient = require('./src/sheets-client'); const client = new SheetsClient(); client.getThreadData().then(threads => { console.log('📋 Available Threads:'); threads.forEach(t => console.log(`${t.id}. ${t.title} (${t.tweets.length} posts) - ${t.scheduledTime || 'No schedule'}`)); })\"",
-    "setup-help": "echo '📖 Setup Guide:' && echo '1. For Google Sheets: See GOOGLE_SHEETS_SETUP.md' && echo '2. For Threads: Run npm start and choose option 3' && echo '3. Test everything: npm run test'"
+  "author": "Threads Bot Developer",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/threads-auto-upload-bot.git"
   },
+  "bugs": {
+    "url": "https://github.com/yourusername/threads-auto-upload-bot/issues"
+  },
+  "homepage": "https://github.com/yourusername/threads-auto-upload-bot#readme",
   "keywords": [
     "threads",
     "automation",
@@ -21,10 +21,26 @@
     "google-sheets",
     "scheduling",
     "meta",
-    "instagram"
+    "instagram",
+    "thread-chains",
+    "csv-integration",
+    "smart-scheduler",
+    "session-management"
   ],
-  "author": "",
-  "license": "ISC",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "cleanup": "powershell -ExecutionPolicy Bypass -File cleanup.ps1",
+    "test": "node -e \"const SheetsClient = require('./src/sheets-client'); const client = new SheetsClient(); client.testConnection().then(() => process.exit(0)).catch(() => process.exit(1))\"",
+    "test:sheets": "node -e \"const SheetsClient = require('./src/sheets-client'); const client = new SheetsClient(); client.testConnection().then(() => process.exit(0)).catch(() => process.exit(1))\"",
+    "test:threads": "node -e \"const ThreadsBot = require('./src/threads-bot'); const bot = new ThreadsBot(); bot.test().then(() => bot.close()).then(() => process.exit(0)).catch(() => process.exit(1))\"",
+    "view:threads": "node -e \"const SheetsClient = require('./src/sheets-client'); const client = new SheetsClient(); client.getThreadData().then(threads => { console.log('📋 Available Threads:'); threads.forEach(t => console.log(`${t.id}. ${t.title} (${t.tweets.length} posts) - ${t.scheduledTime || 'No schedule'}`)); })\"",
+    "setup:help": "echo '📖 Setup Guide:' && echo '1. For Google Sheets: See GOOGLE_SHEETS_SETUP.md' && echo '2. For Threads: Run npm start and choose option 3' && echo '3. Test everything: npm run test'",
+    "postinstall": "echo '✅ Installation complete! Run npm start to begin.'"
+  },
   "dependencies": {
     "dotenv": "^17.2.0",
     "google-auth-library": "^10.1.0",
