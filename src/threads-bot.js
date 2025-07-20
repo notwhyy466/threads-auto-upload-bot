@@ -3,12 +3,14 @@ const fs = require('fs');
 const path = require('path');
 const logger = require('./utils/logger');
 const { sleep } = require('./utils/delay');
+const CookieManager = require('./utils/cookie-manager');
 
 class ThreadsBot {
     constructor() {
         this.browser = null;
         this.page = null;
         this.isLoggedIn = false;
+        this.cookieManager = new CookieManager();
         this.config = {
             headless: false,
             defaultViewport: { width: 1366, height: 768 },
@@ -267,6 +269,480 @@ class ThreadsBot {
             logger.error('Manual login failed:', error);
             throw error;
         }
+    }
+
+    /**
+     * Login using saved cookies
+     * @returns {boolean} Success status
+     */
+    async loginWithCookies() {
+        try {
+            logger.info('Attempting login with saved cookies...');
+            
+            if (!this.page) {
+                await this.init();
+            }
+
+            // Check if we have saved cookies
+            if (!this.cookieManager.hasSavedCookies()) {
+                logger.info('No saved cookies found');
+                return false;
+            }
+
+            // Load cookies
+            const cookies = await this.cookieManager.loadCookies();
+            if (!cookies) {
+                logger.warn('Failed to load cookies');
+                return false;
+            }
+
+            // Navigate to Threads first (to set domain)
+            await this.page.goto('https://www.threads.net/', { 
+                waitUntil: 'networkidle2',
+                timeout: 30000
+            });
+
+            // Set cookies
+            const cookiesSet = await this.cookieManager.setCookies(this.page, cookies);
+            if (!cookiesSet) {
+                logger.warn('Failed to set cookies');
+                return false;
+            }
+
+            // Refresh page to apply cookies
+            await this.page.reload({ waitUntil: 'networkidle2' });
+            await sleep(3000);
+
+            // Check if login was successful
+            const isLoggedIn = await this.checkLoginStatus();
+            if (isLoggedIn) {
+                this.isLoggedIn = true;
+                logger.info('✅ Cookie login successful!');
+                
+                // Update cookies with current session
+                await this.cookieManager.saveCurrentCookies(this.page);
+                return true;
+            } else {
+                logger.warn('Cookie login failed - cookies may be expired');
+                return false;
+            }
+
+        } catch (error) {
+            logger.error('Cookie login failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Check if user is currently logged in
+     * @returns {boolean} Login status
+     */
+    async checkLoginStatus() {
+        try {
+            if (!this.page) {
+                return false;
+            }
+
+            // Check for login indicators
+            const loginDetectionSelectors = [
+                'a[href="/compose"]',
+                'button[aria-label="Create new thread"]',
+                '[data-testid="primaryButton"]',
+                'div[data-pressable-container="true"]',
+                'svg[aria-label="Create"]',
+                '[aria-label="Create new thread"]',
+                'button[aria-label*="Create"]',
+                '[data-testid="userAvatar"]',
+                '[aria-label*="Profile"]',
+                '[data-testid="feed"]',
+                '[aria-label="Home"]'
+            ];
+
+            for (const selector of loginDetectionSelectors) {
+                try {
+                    const elements = await this.page.$$(selector);
+                    for (const element of elements) {
+                        const isVisible = await this.page.evaluate(el => {
+                            return el && el.offsetParent !== null && 
+                                   getComputedStyle(el).visibility !== 'hidden' &&
+                                   getComputedStyle(el).display !== 'none';
+                        }, element);
+                        
+                        if (isVisible) {
+                            return true;
+                        }
+                    }
+                } catch (e) {
+                    continue;
+                }
+            }
+
+            return false;
+        } catch (error) {
+            logger.error('Failed to check login status:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Save current session cookies for future logins
+     * @returns {boolean} Success status
+     */
+    async saveCookies() {
+        try {
+            if (!this.page) {
+                logger.warn('No page available to save cookies');
+                return false;
+            }
+
+            const success = await this.cookieManager.saveCurrentCookies(this.page);
+            if (success) {
+                logger.info('✅ Cookies saved successfully!');
+            }
+            return success;
+        } catch (error) {
+            logger.error('Failed to save cookies:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Delete saved cookies
+     * @returns {boolean} Success status
+     */
+    async deleteSavedCookies() {
+        try {
+            const success = await this.cookieManager.deleteCookies();
+            if (success) {
+                logger.info('✅ Saved cookies deleted!');
+            }
+            return success;
+        } catch (error) {
+            logger.error('Failed to delete cookies:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get cookie information
+     * @returns {Object|null} Cookie info or null
+     */
+    getCookieInfo() {
+        return this.cookieManager.getCookieInfo();
+    }
+
+    /**
+     * Enhanced login method that tries cookies first, then falls back to manual login
+     * @returns {boolean} Success status
+     */
+    async smartLogin() {
+        try {
+            logger.info('Starting smart login process...');
+            
+            if (!this.page) {
+                await this.init();
+            }
+
+            // First, try cookie login
+            const cookieLogin = await this.loginWithCookies();
+            if (cookieLogin) {
+                return true;
+            }
+
+            // Fall back to manual login
+            logger.info('Cookie login failed, falling back to manual login...');
+            const manualLogin = await this.login();
+            
+            // If manual login successful, save cookies for next time
+            if (manualLogin) {
+                await this.saveCookies();
+            }
+            
+            return manualLogin;
+
+        } catch (error) {
+            logger.error('Smart login failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Login using terminal input (username/password)
+     * @param {string} username - Username/email (optional, will prompt if not provided)
+     * @param {string} password - Password (optional, will prompt if not provided)
+     * @returns {boolean} Success status
+     */
+    async loginWithCredentials(username = null, password = null) {
+        try {
+            logger.info('Attempting terminal-based login...');
+            
+            if (!this.page) {
+                await this.init();
+            }
+
+            // Check if already logged in
+            if (await this.checkLoginStatus()) {
+                this.isLoggedIn = true;
+                logger.info('Already logged in');
+                return true;
+            }
+
+            // Get credentials from environment variables or saved data
+            if (!username || !password) {
+                const credentials = await this.getCredentials();
+                username = username || credentials.username;
+                password = password || credentials.password;
+            }
+
+            if (!username || !password) {
+                logger.error('No credentials provided');
+                return false;
+            }
+
+            // Navigate to login page
+            await this.page.goto('https://www.threads.net/', { 
+                waitUntil: 'networkidle2',
+                timeout: 30000
+            });
+
+            await this.sleep(3000);
+
+            // Look for login button or redirect to Instagram login
+            const loginSelectors = [
+                'a[href*="login"]',
+                'button:contains("Log in")',
+                '[role="button"]:contains("Log in")',
+                'a:contains("Log in")'
+            ];
+
+            let loginButton = null;
+            for (const selector of loginSelectors) {
+                try {
+                    if (selector.includes('contains')) {
+                        const elements = await this.page.$$('a, button, [role="button"]');
+                        for (const element of elements) {
+                            const text = await this.page.evaluate(el => el.textContent, element);
+                            if (text.toLowerCase().includes('log in')) {
+                                loginButton = element;
+                                break;
+                            }
+                        }
+                    } else {
+                        loginButton = await this.page.$(selector);
+                    }
+                    if (loginButton) break;
+                } catch (e) {
+                    continue;
+                }
+            }
+
+            if (loginButton) {
+                logger.info('Clicking login button...');
+                await loginButton.click();
+                await this.sleep(3000);
+            }
+
+            // Wait for Instagram login form
+            await this.page.waitForSelector('input[name="username"], input[type="text"]', { timeout: 10000 });
+
+            // Fill username
+            const usernameField = await this.page.$('input[name="username"], input[type="text"]');
+            if (usernameField) {
+                await usernameField.click();
+                await usernameField.type(username, { delay: 100 });
+                logger.info('Username entered');
+            }
+
+            // Fill password
+            const passwordField = await this.page.$('input[name="password"], input[type="password"]');
+            if (passwordField) {
+                await passwordField.click();
+                await passwordField.type(password, { delay: 100 });
+                logger.info('Password entered');
+            }
+
+            // Submit form
+            const submitSelectors = [
+                'button[type="submit"]',
+                'button:contains("Log in")',
+                'button:contains("Log In")',
+                '[role="button"]:contains("Log")'
+            ];
+
+            let submitButton = null;
+            for (const selector of submitSelectors) {
+                try {
+                    if (selector.includes('contains')) {
+                        const buttons = await this.page.$$('button, [role="button"]');
+                        for (const button of buttons) {
+                            const text = await this.page.evaluate(el => el.textContent, button);
+                            if (text.toLowerCase().includes('log')) {
+                                submitButton = button;
+                                break;
+                            }
+                        }
+                    } else {
+                        submitButton = await this.page.$(selector);
+                    }
+                    if (submitButton) break;
+                } catch (e) {
+                    continue;
+                }
+            }
+
+            if (submitButton) {
+                logger.info('Submitting login form...');
+                await submitButton.click();
+                await this.sleep(5000);
+            }
+
+            // Wait for login to complete and redirect back to Threads
+            await this.page.waitForFunction(() => {
+                return window.location.href.includes('threads.net') && 
+                       !window.location.href.includes('login');
+            }, { timeout: 30000 });
+
+            // Verify login success
+            const isLoggedIn = await this.checkLoginStatus();
+            if (isLoggedIn) {
+                this.isLoggedIn = true;
+                logger.info('✅ Terminal login successful!');
+                
+                // Save credentials and cookies for future use
+                await this.cookieManager.saveCredentials(username, password);
+                await this.saveCookies();
+                
+                return true;
+            } else {
+                logger.warn('Terminal login failed - credentials may be incorrect');
+                return false;
+            }
+
+        } catch (error) {
+            logger.error('Terminal login failed:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get credentials from environment variables or saved data
+     * @returns {Object} Credentials object
+     */
+    async getCredentials() {
+        try {
+            // First try environment variables
+            const envUsername = process.env.THREADS_USERNAME || process.env.INSTAGRAM_USERNAME;
+            const envPassword = process.env.THREADS_PASSWORD || process.env.INSTAGRAM_PASSWORD;
+
+            if (envUsername && envPassword) {
+                logger.info('Using credentials from environment variables');
+                return { username: envUsername, password: envPassword };
+            }
+
+            // Then try saved credentials
+            const savedCredentials = await this.cookieManager.loadCredentials();
+            if (savedCredentials) {
+                logger.info('Using saved credentials');
+                return savedCredentials;
+            }
+
+            return { username: null, password: null };
+        } catch (error) {
+            logger.error('Failed to get credentials:', error);
+            return { username: null, password: null };
+        }
+    }
+
+    /**
+     * Save credentials for future use
+     * @param {string} username - Username/email
+     * @param {string} password - Password
+     */
+    async saveCredentials(username, password) {
+        try {
+            return await this.cookieManager.saveCredentials(username, password);
+        } catch (error) {
+            logger.error('Failed to save credentials:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Delete saved credentials
+     */
+    async deleteCredentials() {
+        try {
+            return await this.cookieManager.deleteCredentials();
+        } catch (error) {
+            logger.error('Failed to delete credentials:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get credentials info
+     */
+    getCredentialsInfo() {
+        return this.cookieManager.getCredentialsInfo();
+    }
+
+    /**
+     * Ultimate smart login - tries all methods in order
+     * 1. Cookies (fastest)
+     * 2. Saved credentials (automatic)
+     * 3. Environment variables (automatic)
+     * 4. Manual login (fallback)
+     */
+    async ultimateLogin() {
+        try {
+            logger.info('Starting ultimate login process...');
+            
+            if (!this.page) {
+                await this.init();
+            }
+
+            // Check if already logged in
+            if (await this.checkLoginStatus()) {
+                this.isLoggedIn = true;
+                logger.info('Already logged in');
+                return true;
+            }
+
+            // 1. Try cookie login first
+            logger.info('Trying cookie login...');
+            const cookieLogin = await this.loginWithCookies();
+            if (cookieLogin) {
+                return true;
+            }
+
+            // 2. Try credentials login
+            logger.info('Trying credentials login...');
+            const credentialsLogin = await this.loginWithCredentials();
+            if (credentialsLogin) {
+                return true;
+            }
+
+            // 3. Fall back to manual login
+            logger.info('Falling back to manual login...');
+            const manualLogin = await this.login();
+            
+            if (manualLogin) {
+                await this.saveCookies();
+            }
+            
+            return manualLogin;
+
+        } catch (error) {
+            logger.error('Ultimate login failed:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Helper function for sleep
+     */
+    async sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     /**

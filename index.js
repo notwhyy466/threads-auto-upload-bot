@@ -9,6 +9,7 @@ const SimpleScheduler = require('./src/simple-scheduler');
 const ThreadsBot = require('./src/threads-bot');
 const SheetsClient = require('./src/sheets-client');
 const CSVClient = require('./src/csv-client');
+const CredentialPrompt = require('./src/utils/credential-prompt');
 
 class ThreadsBotApp {
   constructor() {
@@ -41,29 +42,42 @@ class ThreadsBotApp {
    */
   showMenu() {
     console.clear();
-    console.log('\n' + '='.repeat(60));
+    console.log('\n' + '='.repeat(70));
     console.log('🧵 THREADS AUTO POSTING BOT');
-    console.log('='.repeat(60));
+    console.log('='.repeat(70));
     console.log('📁 CSV MANAGEMENT:');
     console.log('1. List Available CSV Files');
     console.log('2. Load CSV File');
     console.log('3. Create Sample CSV');
     console.log('4. View Current CSV Data');
     console.log('');
+    console.log('🔐 LOGIN OPTIONS:');
+    console.log('5. Ultimate Login (All Methods)') + ' ⭐ RECOMMENDED';
+    console.log('6. Terminal Login (Username/Password)');
+    console.log('7. Smart Login (Cookies + Manual)');
+    console.log('8. Manual Login to Threads');
+    console.log('');
     console.log('🤖 BOT OPERATIONS:');
-    console.log('5. Manual Login to Threads');
-    console.log('6. Post Thread Manually');
-    console.log('7. Start Smart Scheduler (Recommended)');
-    console.log('8. Schedule Individual Thread');
-    console.log('9. Quick Test: Schedule 1 Thread in 30 seconds');
-    console.log('10. Check Status');
-    console.log('11. Stop Scheduler');
+    console.log('9. Post Thread Manually');
+    console.log('10. Start Smart Scheduler (Recommended)');
+    console.log('11. Schedule Individual Thread');
+    console.log('12. Quick Test: Schedule 1 Thread in 30 seconds');
+    console.log('13. Check Status');
+    console.log('14. Stop Scheduler');
+    console.log('');
+    console.log('🍪 SESSION MANAGEMENT:');
+    console.log('15. Save Current Cookies');
+    console.log('16. Login with Cookies');
+    console.log('17. View Cookie Info');
+    console.log('18. Delete Saved Cookies');
+    console.log('19. View Saved Credentials');
+    console.log('20. Delete Saved Credentials');
     console.log('');
     console.log('⚙️  OTHER:');
-    console.log('12. Test Connection');
-    console.log('13. Switch Scheduler Type');
-    console.log('14. Exit');
-    console.log('='.repeat(60));
+    console.log('21. Test Connection');
+    console.log('22. Switch Scheduler Type');
+    console.log('23. Exit');
+    console.log('='.repeat(70));
     
     // Show current data source info
     if (this.dataSource === 'csv') {
@@ -329,6 +343,393 @@ class ThreadsBotApp {
       
     } catch (error) {
       console.log(`❌ Login failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Smart login to Threads (cookies + manual fallback)
+   */
+  async smartLogin() {
+    console.log('\n🧠 Smart Login to Threads');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      if (!this.threadsBot.browser) {
+        await this.threadsBot.initialize();
+      }
+
+      if (this.threadsBot.isLoggedIn) {
+        console.log('✅ Already logged in to Threads');
+        return;
+      }
+
+      console.log('🔄 Attempting smart login (cookies first, then manual)...');
+      
+      const loginResult = await this.threadsBot.smartLogin();
+      
+      if (loginResult && this.threadsBot.isLoggedIn) {
+        console.log('✅ Successfully logged in to Threads!');
+        console.log('💾 Session cookies saved for future use');
+      } else {
+        console.log('❌ Smart login failed');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Smart login failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Save current session cookies
+   */
+  async saveCookies() {
+    console.log('\n💾 Save Current Session Cookies');
+    
+    try {
+      if (!this.threadsBot || !this.threadsBot.browser) {
+        console.log('❌ No active browser session. Please login first.');
+        return;
+      }
+
+      if (!this.threadsBot.isLoggedIn) {
+        console.log('❌ Not logged in. Please login first before saving cookies.');
+        return;
+      }
+
+      console.log('💾 Saving current session cookies...');
+      const success = await this.threadsBot.saveCookies();
+      
+      if (success) {
+        console.log('✅ Cookies saved successfully!');
+        console.log('🔄 You can now use "Login with Cookies" for faster future logins');
+      } else {
+        console.log('❌ Failed to save cookies');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Error saving cookies: ${error.message}`);
+    }
+  }
+
+  /**
+   * Login using saved cookies
+   */
+  async loginWithCookies() {
+    console.log('\n🍪 Login with Saved Cookies');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      if (!this.threadsBot.browser) {
+        await this.threadsBot.initialize();
+      }
+
+      if (this.threadsBot.isLoggedIn) {
+        console.log('✅ Already logged in to Threads');
+        return;
+      }
+
+      console.log('🔄 Attempting login with saved cookies...');
+      const loginResult = await this.threadsBot.loginWithCookies();
+      
+      if (loginResult && this.threadsBot.isLoggedIn) {
+        console.log('✅ Cookie login successful!');
+        console.log('⚡ Fast login completed');
+      } else {
+        console.log('❌ Cookie login failed');
+        console.log('💡 Try "Smart Login" or "Manual Login" instead');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Cookie login failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * View cookie information
+   */
+  async viewCookieInfo() {
+    console.log('\n🍪 Cookie Information');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      const cookieInfo = this.threadsBot.getCookieInfo();
+      
+      if (!cookieInfo) {
+        console.log('❌ No saved cookies found');
+        console.log('💡 Login first and save cookies to use this feature');
+        return;
+      }
+
+      console.log('📊 Cookie Information:');
+      console.log(`📅 Saved: ${new Date(cookieInfo.savedAt).toLocaleString()}`);
+      console.log(`🧮 Count: ${cookieInfo.cookieCount} cookies`);
+      console.log(`📁 Size: ${(cookieInfo.fileSize / 1024).toFixed(2)} KB`);
+      console.log(`⏰ Last Modified: ${cookieInfo.lastModified.toLocaleString()}`);
+      
+      // Calculate age
+      const ageInDays = Math.floor((Date.now() - new Date(cookieInfo.savedAt).getTime()) / (1000 * 60 * 60 * 24));
+      console.log(`📆 Age: ${ageInDays} days old`);
+      
+      if (ageInDays > 30) {
+        console.log('⚠️  Warning: Cookies are over 30 days old and may be expired');
+      } else if (ageInDays > 14) {
+        console.log('⚠️  Warning: Cookies are over 2 weeks old');
+      } else {
+        console.log('✅ Cookies are fresh');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Error viewing cookie info: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete saved cookies
+   */
+  async deleteSavedCookies() {
+    console.log('\n🗑️  Delete Saved Cookies');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      const cookieInfo = this.threadsBot.getCookieInfo();
+      
+      if (!cookieInfo) {
+        console.log('❌ No saved cookies found to delete');
+        return;
+      }
+
+      console.log('🍪 Found saved cookies:');
+      console.log(`📅 Saved: ${new Date(cookieInfo.savedAt).toLocaleString()}`);
+      console.log(`🧮 Count: ${cookieInfo.cookieCount} cookies`);
+      
+      const confirmation = await this.askQuestion('\n⚠️  Are you sure you want to delete saved cookies? (y/N): ');
+      
+      if (confirmation.toLowerCase() === 'y' || confirmation.toLowerCase() === 'yes') {
+        const success = await this.threadsBot.deleteSavedCookies();
+        
+        if (success) {
+          console.log('✅ Cookies deleted successfully!');
+          console.log('💡 You will need to login manually next time');
+        } else {
+          console.log('❌ Failed to delete cookies');
+        }
+      } else {
+        console.log('❌ Cookie deletion cancelled');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Error deleting cookies: ${error.message}`);
+    }
+  }
+
+  /**
+   * Ultimate login (tries all methods)
+   */
+  async ultimateLogin() {
+    console.log('\n🚀 Ultimate Login (All Methods)');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      if (!this.threadsBot.browser) {
+        await this.threadsBot.initialize();
+      }
+
+      if (this.threadsBot.isLoggedIn) {
+        console.log('✅ Already logged in to Threads');
+        return;
+      }
+
+      console.log('🔄 Trying all login methods automatically...');
+      console.log('⚡ 1. Checking cookies...');
+      console.log('🔐 2. Checking saved credentials...');
+      console.log('🌍 3. Checking environment variables...');
+      console.log('👤 4. Manual login if needed...');
+      
+      const loginResult = await this.threadsBot.ultimateLogin();
+      
+      if (loginResult && this.threadsBot.isLoggedIn) {
+        console.log('✅ Ultimate login successful!');
+        console.log('💾 Session data saved for future use');
+      } else {
+        console.log('❌ Ultimate login failed');
+        console.log('💡 Try setting THREADS_USERNAME and THREADS_PASSWORD in .env file');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Ultimate login failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * Terminal login (username/password input)
+   */
+  async terminalLogin() {
+    console.log('\n🔐 Terminal Login (Username/Password)');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      if (!this.threadsBot.browser) {
+        await this.threadsBot.initialize();
+      }
+
+      if (this.threadsBot.isLoggedIn) {
+        console.log('✅ Already logged in to Threads');
+        return;
+      }
+
+      // Check for saved credentials first
+      const credentialsInfo = this.threadsBot.getCredentialsInfo();
+      let useExisting = false;
+      
+      if (credentialsInfo) {
+        console.log(`🔍 Found saved credentials for: ${credentialsInfo.username}`);
+        console.log(`📅 Saved: ${new Date(credentialsInfo.savedAt).toLocaleDateString()}`);
+        
+        const useSaved = await this.askQuestion('\nUse saved credentials? (y/N): ');
+        useExisting = useSaved.toLowerCase() === 'y' || useSaved.toLowerCase() === 'yes';
+      }
+
+      let loginResult;
+      
+      if (useExisting) {
+        console.log('🔄 Using saved credentials...');
+        loginResult = await this.threadsBot.loginWithCredentials();
+      } else {
+        // Prompt for new credentials
+        const credentialPrompt = new CredentialPrompt();
+        
+        try {
+          const credentials = await credentialPrompt.promptCredentials(
+            credentialsInfo ? credentialsInfo.username : ''
+          );
+          
+          console.log('🔄 Logging in with provided credentials...');
+          loginResult = await this.threadsBot.loginWithCredentials(
+            credentials.username, 
+            credentials.password
+          );
+          
+        } catch (promptError) {
+          console.log(`❌ Error getting credentials: ${promptError.message}`);
+          return;
+        } finally {
+          credentialPrompt.close();
+        }
+      }
+      
+      if (loginResult && this.threadsBot.isLoggedIn) {
+        console.log('✅ Terminal login successful!');
+        console.log('💾 Credentials and cookies saved for future use');
+      } else {
+        console.log('❌ Terminal login failed');
+        console.log('💡 Check your username/password and try again');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Terminal login failed: ${error.message}`);
+    }
+  }
+
+  /**
+   * View saved credentials info
+   */
+  async viewCredentialsInfo() {
+    console.log('\n🔐 Saved Credentials Information');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      const credentialsInfo = this.threadsBot.getCredentialsInfo();
+      
+      if (!credentialsInfo) {
+        console.log('❌ No saved credentials found');
+        console.log('💡 Use "Terminal Login" and save credentials to use this feature');
+        return;
+      }
+
+      console.log('📊 Credentials Information:');
+      console.log(`👤 Username: ${credentialsInfo.username}`);
+      console.log(`📅 Saved: ${new Date(credentialsInfo.savedAt).toLocaleString()}`);
+      console.log(`⏰ Last Modified: ${credentialsInfo.lastModified.toLocaleString()}`);
+      
+      // Calculate age
+      const ageInDays = Math.floor((Date.now() - new Date(credentialsInfo.savedAt).getTime()) / (1000 * 60 * 60 * 24));
+      console.log(`📆 Age: ${ageInDays} days old`);
+      
+      if (ageInDays > 90) {
+        console.log('⚠️  Warning: Credentials are over 90 days old, consider updating');
+      } else {
+        console.log('✅ Credentials are available for quick login');
+      }
+
+      // Show environment variables status
+      const hasEnvCreds = process.env.THREADS_USERNAME && process.env.THREADS_PASSWORD;
+      console.log(`🌍 Environment Variables: ${hasEnvCreds ? '✅ Set' : '❌ Not set'}`);
+      
+    } catch (error) {
+      console.log(`❌ Error viewing credentials info: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete saved credentials
+   */
+  async deleteSavedCredentials() {
+    console.log('\n🗑️  Delete Saved Credentials');
+    
+    try {
+      if (!this.threadsBot) {
+        this.threadsBot = new ThreadsBot();
+      }
+
+      const credentialsInfo = this.threadsBot.getCredentialsInfo();
+      
+      if (!credentialsInfo) {
+        console.log('❌ No saved credentials found to delete');
+        return;
+      }
+
+      console.log('🔐 Found saved credentials:');
+      console.log(`👤 Username: ${credentialsInfo.username}`);
+      console.log(`📅 Saved: ${new Date(credentialsInfo.savedAt).toLocaleString()}`);
+      
+      const confirmation = await this.askQuestion('\n⚠️  Are you sure you want to delete saved credentials? (y/N): ');
+      
+      if (confirmation.toLowerCase() === 'y' || confirmation.toLowerCase() === 'yes') {
+        const success = await this.threadsBot.deleteCredentials();
+        
+        if (success) {
+          console.log('✅ Credentials deleted successfully!');
+          console.log('💡 You will need to enter credentials again next time');
+        } else {
+          console.log('❌ Failed to delete credentials');
+        }
+      } else {
+        console.log('❌ Credential deletion cancelled');
+      }
+      
+    } catch (error) {
+      console.log(`❌ Error deleting credentials: ${error.message}`);
     }
   }
 
@@ -1375,40 +1776,67 @@ class ThreadsBotApp {
             await this.viewCurrentCSVData();
             break;
           case '5':
-            await this.manualLogin();
+            await this.ultimateLogin();
             break;
           case '6':
-            await this.postThreadManually();
+            await this.terminalLogin();
             break;
           case '7':
-            await this.startSmartScheduler();
+            await this.smartLogin();
             break;
           case '8':
-            await this.scheduleIndividualThread();
+            await this.manualLogin();
             break;
           case '9':
-            await this.quickTestScheduler();
+            await this.postThreadManually();
             break;
           case '10':
-            await this.checkStatus();
+            await this.startSmartScheduler();
             break;
           case '11':
-            await this.stopScheduler();
+            await this.scheduleIndividualThread();
             break;
           case '12':
-            await this.testConnection();
+            await this.quickTestScheduler();
             break;
           case '13':
-            await this.switchSchedulerType();
+            await this.checkStatus();
             break;
           case '14':
+            await this.stopScheduler();
+            break;
+          case '15':
+            await this.saveCookies();
+            break;
+          case '16':
+            await this.loginWithCookies();
+            break;
+          case '17':
+            await this.viewCookieInfo();
+            break;
+          case '18':
+            await this.deleteSavedCookies();
+            break;
+          case '19':
+            await this.viewCredentialsInfo();
+            break;
+          case '20':
+            await this.deleteSavedCredentials();
+            break;
+          case '21':
+            await this.testConnection();
+            break;
+          case '22':
+            await this.switchSchedulerType();
+            break;
+          case '23':
             await this.cleanup();
             return;
           default:
-            console.log('❌ Invalid option. Please choose 1-14.');
+            console.log('❌ Invalid option. Please choose 1-23.');
         }
 
-        if (choice !== '14') {
+        if (choice !== '23') {
           await this.askQuestion('\n⏳ Press Enter to continue...');
         }
       }

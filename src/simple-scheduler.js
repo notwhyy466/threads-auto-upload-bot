@@ -345,7 +345,7 @@ class SimpleScheduler {
         try {
             const bot = await this.getBotInstance();
             if (!bot.isLoggedIn) {
-                await bot.login();
+                await bot.ultimateLogin();
             }
             logger.info('✅ Scheduler bot ready');
         } catch (error) {

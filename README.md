@@ -1,6 +1,6 @@
 # 🧵 Threads Auto-Upload Bot
 
-A powerful automation bot for posting content to Threads (Meta) with smart scheduling, CSV integration, and session management.
+A powerful automation bot for posting content to Threads (Meta) with smart scheduling, CSV integration, and cookie-based authentication.
 
 ![Node.js](https://img.shields.io/badge/Node.js-16+-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
@@ -8,14 +8,59 @@ A powerful automation bot for posting content to Threads (Meta) with smart sched
 
 ## ✨ Features
 
-- 🔐 **Manual Login with Session Saving**: Login once manually, save Chrome session for future use
+- 🍪 **Cookie-Based Authentication**: Fast login using saved session cookies
+- 🧠 **Smart Login System**: Automatic fallback from cookies to manual login
+- 🔐 **Manual Login with Session Saving**: Login once manually, save session for future use
 - 📊 **CSV Integration**: Load thread content from CSV/Excel files
 - 🚀 **Smart Scheduling**: Multiple scheduling options with automatic timing
 - 🧵 **Thread Chains**: Support for multi-part connected threads
-- 💾 **Session Management**: Persistent login sessions
+- 💾 **Session Management**: Persistent login sessions with cookie storage
 - 🛡️ **Safe Automation**: Minimal resource usage and detection avoidance
 - ⚡ **Quick Test Mode**: Test with 30-second scheduling
 - 📅 **Daily Scheduling**: Automatic posting at optimal times
+
+## 🍪 Authentication Methods
+
+### 1. Ultimate Login (Recommended) ⭐
+- **What it does**: Automatically tries all methods in order
+- **Order**: Cookies → Saved Credentials → Environment Variables → Manual Login
+- **Benefits**: One-click login that always works
+
+### 2. Terminal Login (Username/Password)
+- **What it does**: Enter credentials directly in terminal
+- **Storage**: Credentials saved securely for future use
+- **Benefits**: No browser interaction needed after first setup
+
+### 3. Cookie-Based Login
+- **Fast**: Login in seconds using saved cookies
+- **Persistent**: Cookies last up to 30 days
+- **Automatic**: Smart fallback to manual login if cookies expire
+
+### 4. Smart Login
+- **Hybrid**: Tries cookies first, falls back to manual login
+- **Seamless**: Best of both authentication methods
+- **Self-updating**: Automatically saves fresh cookies after manual login
+
+### 5. Manual Login
+- **Traditional**: Manual browser login process
+- **Reliable**: Always works when other methods fail
+- **Session Saving**: Automatically saves cookies for future use
+
+## 🔧 Environment Variable Setup
+
+Create a `.env` file in the project root:
+
+```env
+# Automatic login credentials (optional)
+THREADS_USERNAME=your_username_or_email@example.com
+THREADS_PASSWORD=your_password_here
+
+# Alternative names also supported
+INSTAGRAM_USERNAME=your_username_or_email@example.com
+INSTAGRAM_PASSWORD=your_password_here
+```
+
+**Important**: Never commit the `.env` file with real credentials!
 
 ## 🚀 Quick Start
 
@@ -104,23 +149,63 @@ npm start
 ```
 
 ### Available Options:
-1. 📁 **List Available CSV Files**
-2. 📂 **Load CSV File**
-3. 📝 **Create Sample CSV**
-4. 📊 **View Current CSV Data**
-5. 🔐 **Manual Login to Threads**
-6. 📝 **Post Thread Manually**
-7. 🚀 **Start Smart Scheduler (Recommended)**
-8. 📅 **Schedule Individual Thread**
-9. ⚡ **Quick Test: Schedule 1 Thread in 30 seconds**
-10. 📊 **Check Status**
-11. ⏹️ **Stop Scheduler**
-12. 🔍 **Test Connection**
-13. ⚙️ **Switch Scheduler Type**
-14. 🚪 **Exit**
+
+#### 📁 CSV Management
+1. **List Available CSV Files**
+2. **Load CSV File**
+3. **Create Sample CSV**
+4. **View Current CSV Data**
+
+#### 🔐 Login Options
+5. **Ultimate Login (All Methods)** ⭐ **RECOMMENDED**
+6. **Terminal Login (Username/Password)** - Direct credential input
+7. **Smart Login (Cookies + Manual)** - Hybrid approach
+8. **Manual Login to Threads** - Traditional browser login
+
+#### 🤖 Bot Operations
+9. **Post Thread Manually**
+10. **Start Smart Scheduler** ⭐ **RECOMMENDED**
+11. **Schedule Individual Thread**
+12. **Quick Test: Schedule 1 Thread in 30 seconds**
+13. **Check Status**
+14. **Stop Scheduler**
+
+#### 🍪 Session Management
+15. **Save Current Cookies** - Save session for future logins
+16. **Login with Cookies** - Fast login using saved cookies
+17. **View Cookie Info** - Check cookie status and age
+18. **Delete Saved Cookies** - Clear saved authentication
+19. **View Saved Credentials** - Check stored username/info
+20. **Delete Saved Credentials** - Clear saved credentials
+
+#### ⚙️ Other Options
+21. **Test Connection**
+22. **Switch Scheduler Type**
+23. **Exit**
+
+### 🔐 Authentication Workflow
+
+#### Method 1: Ultimate Login (Easiest) ⭐
+1. Set credentials in `.env` file OR
+2. Use Terminal Login once to save credentials
+3. Choose **"5. Ultimate Login"** - works automatically!
+
+#### Method 2: Terminal Login
+1. Choose **"6. Terminal Login"**
+2. Enter username/password when prompted
+3. Credentials saved for future use
+4. Next time: Use Ultimate Login or Terminal Login again
+
+#### Method 3: Traditional Setup
+1. Choose **"7. Smart Login"** or **"8. Manual Login"**
+2. Login manually in browser when prompted
+3. Cookies automatically saved for future use
 
 ### Quick Commands
 ```bash
+# Test cookie functionality
+node test-cookie-login.js
+
 # Create sample data
 npm run sample
 

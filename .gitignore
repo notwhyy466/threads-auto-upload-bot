@@ -1,20 +1,15 @@
 # Environment Variables
 .env
 
-# Chrome User Data (keep only essential session files)
+# Chrome User Data (keep Default folder for session)
 data/chrome-profile/*
 !data/chrome-profile/Default/
-data/chrome-profile/Default/Cache/
-data/chrome-profile/Default/Code Cache/
-data/chrome-profile/Default/GPUCache/
-data/chrome-profile/Default/DawnGraphiteCache/
-data/chrome-profile/Default/DawnWebGPUCache/
-data/chrome-profile/Default/Service Worker/
-data/chrome-profile/Default/Sessions/
-data/chrome-profile/Default/Shared Dictionary/
-data/chrome-profile/Default/IndexedDB/
-data/chrome-profile/Default/Local Storage/
-data/chrome-profile/Default/Session Storage/
+
+# Cookie files - NEVER commit authentication data
+data/threads-cookies.json
+data/threads-credentials.json
+*cookies*.json
+*credentials*.json
 
 # Test files and debugging
 test-*.js
