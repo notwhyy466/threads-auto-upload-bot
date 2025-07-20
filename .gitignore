@@ -4,6 +4,21 @@
 # Chrome User Data (keep Default folder for session)
 data/chrome-profile/*
 !data/chrome-profile/Default/
+# But ignore Chrome runtime files
+data/chrome-profile/Default/Cache/
+data/chrome-profile/Default/Code Cache/
+data/chrome-profile/Default/GPUCache/
+data/chrome-profile/Default/IndexedDB/
+data/chrome-profile/Default/Local Storage/
+data/chrome-profile/Default/Service Worker/
+data/chrome-profile/Default/Session Storage/
+data/chrome-profile/Default/Sessions/
+data/chrome-profile/Default/Shared Dictionary/
+data/chrome-profile/Default/blob_storage/
+data/chrome-profile/Default/*Cache*/
+data/chrome-profile/Default/*.wal
+data/chrome-profile/Default/DIPS*
+data/chrome-profile/Default/Dawn*/
 
 # Cookie files - NEVER commit authentication data
 data/threads-cookies.json
@@ -20,6 +35,8 @@ debug-*.png
 *.broken-backup
 *-clean.js
 *-fixed.js
+contoh-*.js
+post-*.js
 
 # Documentation files (keep README.md and setup guides)
 *.md
