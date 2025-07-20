@@ -1,0 +1,3 @@
+id,title,tweet1,tweet2,tweet3,tweet4,tweet5,scheduledTime
+1,"Test Thread Manual","Ini adalah test thread untuk posting manual 🧵","Test tweet 1 untuk manual posting","Test tweet 2 untuk memastikan semua berjalan lancar","Test tweet 3 sebagai penutup thread","",
+2,"Thread Terjadwal","Thread ini akan diposting otomatis sesuai jadwal ⏰","Tweet pertama dari thread terjadwal","Tweet kedua dengan timing yang tepat","Tweet terakhir untuk menyelesaikan thread","","",20:00
